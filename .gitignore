@@ -1,52 +1,652 @@
-# Prerequisites
-*.d
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
+typedef struct {
+    int id;
+    char nome[100];
+} produto;
 
-# Linker output
-*.ilk
-*.map
-*.exp
+typedef struct {
+    int id;
+    char nome[100];
+} fabricante;
 
-# Precompiled Headers
-*.gch
-*.pch
+typedef struct {
+    int id;
+    char nome[100];
+} tipo;
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
+void criarLista(produto produtos[], fabricante fabricantes[], tipo tipos[], int *contagem) {
+    int i;
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+    printf("Digite as informacoes sobre o produto ou preencha com 0 para parar.\n----------------------------------\n");
 
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+    for (i = 0; i < 999; i++) {
+        printf("Digite o numero do ID do produto: ");
+        scanf("%d", &produtos[i].id);
+        if (produtos[i].id == 0) {
+            break;
+        }
+        printf("Digite o nome do produto: ");
+        scanf("%s", produtos[i].nome);
 
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
+        fabricantes[i].id=produtos[i].id;
+        printf("Digite o nome do fabricante: ");
+        scanf("%s", fabricantes[i].nome);
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+        tipos[i].id=produtos[i].id;
+        printf("Digite o nome do tipo de produto: ");
+        scanf("%s", tipos[i].nome);
+        printf("\n----------------------------------\n");
+        printf("----------------------------------\n");
+        printf("Novo produto:\n----------------------------------\n");
+        printf("----------------------------------\n\n");
+
+        (*contagem)++;
+    }
+
+    FILE *arquivoProduto = fopen("produto.txt", "w");
+    if (arquivoProduto == NULL) {
+        printf("Erro ao abrir o arquivo de produto.\n");
+        return;
+    }
+
+    for (i = 0; i < *contagem; i++) {
+        fprintf(arquivoProduto, "%d %s\n", produtos[i].id, produtos[i].nome);
+    }
+
+    fclose(arquivoProduto);
+
+    FILE *arquivoFabricante = fopen("fabricante.txt", "w");
+    if (arquivoFabricante == NULL) {
+        printf("Erro ao abrir o arquivo de fabricante.\n");
+        return;
+    }
+
+    for (i = 0; i < *contagem; i++) {
+        fprintf(arquivoFabricante, "%d %s\n", fabricantes[i].id, fabricantes[i].nome);
+    }
+
+    fclose(arquivoFabricante);
+
+    FILE *arquivoTipo = fopen("tipo.txt", "w");
+    if (arquivoTipo == NULL) {
+        printf("Erro ao abrir o arquivo de tipo.\n");
+        return;
+    }
+
+    for (i = 0; i < *contagem; i++) {
+        fprintf(arquivoTipo, "%d %s\n", tipos[i].id, tipos[i].nome);
+    }
+
+    fclose(arquivoTipo);
+
+    printf("\n----------------------------------\n");
+    printf("%d produtos salvos.\n", *contagem);
+    printf("----------------------------------\n\n");
+}
+
+void excluirItem(int contagem) {
+    int exid;
+    printf("Digite o ID do produto que voce deseja excluir: ");
+    scanf("%d", &exid);
+
+    FILE *arquivoProduto = fopen("produto.txt", "r");
+    if (arquivoProduto == NULL) {
+        printf("Erro ao abrir o arquivo de produtos.\n");
+        return;
+    }
+
+    FILE *arquivoTemp = fopen("produto_temp.txt", "w");
+    if (arquivoTemp == NULL) {
+        printf("Erro ao criar o arquivo temporario.\n");
+        fclose(arquivoProduto);
+        return;
+    }
+
+    int aux = 0;
+    char linhaaux[100];
+    while (fgets(linhaaux, sizeof(linhaaux), arquivoProduto)) {
+        int produtoIdaux;
+        char nomeaux[100];
+        sscanf(linhaaux, "%d %[^\n]", &produtoIdaux, nomeaux);
+        if (produtoIdaux == exid) {
+            aux = 1;
+        }
+    }
+    if (aux >= 1) {
+        char linha[100];
+        rewind(arquivoProduto);
+        while (fgets(linha, sizeof(linha), arquivoProduto)) {
+            int produtoId;
+            char nome[100];
+            sscanf(linha, "%d %[^\n]", &produtoId, nome);
+            if (produtoId != exid) {
+                fprintf(arquivoTemp, "%d %s\n", produtoId, nome);
+            }
+        }
+
+        fclose(arquivoProduto);
+        fclose(arquivoTemp);
+
+        remove("produto.txt");
+        rename("produto_temp.txt", "produto.txt");
+
+        FILE *arquivoFabricante = fopen("fabricante.txt", "r");
+        if (arquivoFabricante == NULL) {
+            printf("Erro ao abrir o arquivo de fabricantes.\n");
+            return;
+        }
+
+        FILE *arquivoTempf = fopen("fabricante_temp.txt", "w");
+        if (arquivoTempf == NULL) {
+            printf("Erro ao criar o arquivo temporario.\n");
+            fclose(arquivoFabricante);
+            return;
+        }
+
+        char linhaf[100];
+        while (fgets(linhaf, sizeof(linhaf), arquivoFabricante)) {
+            int idf;
+            char nomef[100];
+            sscanf(linhaf, "%d %[^\n]", &idf, nomef);
+            if (idf != exid) {
+                fprintf(arquivoTempf, "%d %s\n", idf, nomef);
+            }
+        }
+
+        fclose(arquivoFabricante);
+        fclose(arquivoTempf);
+
+        remove("fabricante.txt");
+        rename("fabricante_temp.txt", "fabricante.txt");
+
+        FILE *arquivoTipo = fopen("tipo.txt", "r");
+        if (arquivoTipo == NULL) {
+            printf("Erro ao abrir o arquivo de tipos.\n");
+            return;
+        }
+
+        FILE *arquivoTempt = fopen("tipo_temp.txt", "w");
+        if (arquivoTempt == NULL) {
+            printf("Erro ao criar o arquivo temporario.\n");
+            fclose(arquivoTipo);
+            return;
+        }
+
+        char linhat[100];
+        while (fgets(linhat, sizeof(linhat), arquivoTipo)) {
+            int idt;
+            char nomet[100];
+            sscanf(linhat, "%d %[^\n]", &idt, nomet);
+            if (idt != exid) {
+                fprintf(arquivoTempt, "%d %s\n", idt, nomet);
+            }
+        }
+
+        fclose(arquivoTipo);
+        fclose(arquivoTempt);
+
+        remove("tipo.txt");
+        rename("tipo_temp.txt", "tipo.txt");
+
+        printf("----------------------------------\n");
+        printf("Produto excluido com sucesso\n");
+        printf("----------------------------------");
+    } else {
+        printf("Nao foi encontrado nenhum produto com este ID.\n");
+        remove("produto_temp.txt");
+    }
+    int denovo;
+    printf("Voce deseja excluir outro podroduto?\n");
+    printf("1 - Sim \ 2 - Nao\n");
+    scanf("%d",&denovo);
+    if(denovo==1){
+        excluirItem(contagem);
+    }
+}
+
+
+void verLista(produto produtos[], fabricante fabricantes[], tipo tipos[], int contagem) {
+    FILE *arquivoProduto = fopen("produto.txt", "r");
+    if (arquivoProduto == NULL) {
+        printf("Erro ao abrir o arquivo de produto.\n");
+        return;
+    }
+    FILE *arquivoFabricante = fopen("fabricante.txt", "r");
+    if (arquivoFabricante == NULL) {
+        printf("Erro ao abrir o arquivo de fabricantes.\n");
+        return;
+    }
+    FILE *arquivoTipo = fopen("tipo.txt", "r");
+    if (arquivoTipo == NULL) {
+        printf("Erro ao abrir o arquivo de tipo.\n");
+        return;
+    }
+
+    printf("Lista de Produtos:\n----------------------------------\n");
+
+    char linha[100];
+    while (fgets(linha, sizeof(linha), arquivoProduto)) {
+        int id;
+        char nome[100];
+        sscanf(linha, "%d %[^\n]", &id, nome);
+        printf("ID do produto: %d\n", id);
+        printf("Nome do produto: %s\n", nome);
+        
+    }
+    printf("----------------------------------\n");
+    fclose(arquivoProduto);
+
+ printf("Lista de Fabricantes:\n----------------------------------\n");
+
+    char linhaf[100];
+    while (fgets(linhaf, sizeof(linhaf), arquivoFabricante)) {
+        int idf;
+        char nomef[100];
+        sscanf(linhaf, "%d %[^\n]", &idf, nomef);
+        printf("ID do fabricante: %d\n", idf);
+        printf("Nome do fabricante: %s\n", nomef);
+        
+    }
+    printf("----------------------------------\n");
+    fclose(arquivoFabricante);
+
+    printf("Lista de Tipos:\n----------------------------------\n");
+
+    char linhat[100];
+    while (fgets(linhat, sizeof(linhat), arquivoTipo)) {
+        int idt;
+        char nomet[100];
+        sscanf(linhat, "%d %[^\n]", &idt, nomet);
+        printf("ID do tipo: %d\n", idt);
+        printf("Nome do tipo: %s\n", nomet);
+        
+    }
+    printf("----------------------------------\n");
+    fclose(arquivoTipo);
+}
+
+void editarLista() {
+    char novonome[100];
+    FILE *arquivoProduto = fopen("produto.txt", "r");
+    if (arquivoProduto == NULL) {
+        printf("Erro ao abrir o arquivo de produto.\n");
+        return;
+    }
+    int prodedit;
+    printf("Qual o ID do produto que voce deseja editar?\n");
+    scanf("%d",&prodedit);
+
+    int aux;
+    char linhaaux[100];
+    while (fgets(linhaaux, sizeof(linhaaux), arquivoProduto)) {
+        int produtoIdaux;
+        char nomeaux[100];
+        sscanf(linhaaux, "%d %[^\n]", &produtoIdaux, nomeaux);
+        if (produtoIdaux == prodedit) {
+            aux = 1;
+        }
+} if(aux==1){
+    
+    int escolha;
+    printf("Voce deseja Editar o nome do Produto?\n1 - Sim / 2 - Nao\n");
+    scanf("%d",&escolha);
+
+if(escolha==1){
+printf("Digite o novo nome do Produto:\n");
+scanf("%s",novonome);
+
+ FILE *arquivoTemp = fopen("produto_temp.txt", "w");
+    if (arquivoTemp == NULL) {
+        printf("Erro ao criar o arquivo temporário.\n");
+        fclose(arquivoProduto);
+        return;
+    }
+
+    char linha[100];
+    rewind(arquivoProduto);
+    while (fgets(linha, sizeof(linha), arquivoProduto)) {
+        int produtoId;
+        char nome[100];
+        sscanf(linha, "%d %[^\n]", &produtoId, nome);
+            if (produtoId == prodedit) {
+                fprintf(arquivoTemp, "%d %s\n", prodedit, novonome);
+            }else{
+                fprintf(arquivoTemp, "%d %s\n", produtoId, nome);
+            }
+        }
+        fclose(arquivoProduto);
+        fclose(arquivoTemp);
+
+        remove("produto.txt");
+        rename("produto_temp.txt", "produto.txt");
+
+        printf("----------------------------------\n");
+        printf("Nome do produto editado com Sucesso\n");
+        printf("----------------------------------\n");
+        }
+
+    int escolhaf;
+    printf("Voce deseja Editar o nome do Fabricante?\n1 - Sim / 2 - Nao\n");
+    scanf("%d",&escolhaf);
+    
+    if(escolhaf==1){
+                 FILE *arquivoFabricante = fopen("fabricante.txt", "r");
+        if (arquivoFabricante == NULL) {
+        printf("Erro ao abrir o arquivo de produto.\n");
+        return;
+    }
+
+         FILE *arquivoTempf = fopen("fabricante_temp.txt", "w");
+        if (arquivoTempf == NULL) {
+        printf("Erro ao criar o arquivo temporario.\n");
+        fclose(arquivoFabricante);
+        return;
+    }
+    char novonomef[100];
+    printf("Digite o novo nome do Fabricante do produto:\n");
+    scanf("%s",novonomef);
+    char linhaf[100];
+    rewind(arquivoFabricante);
+    while (fgets(linhaf, sizeof(linhaf), arquivoFabricante)) {
+        int produtoId;
+        char nomef[100];
+        sscanf(linhaf, "%d %[^\n]", &produtoId, nomef);
+            if (produtoId == prodedit) {
+                fprintf(arquivoTempf, "%d %s\n", prodedit, novonomef);
+            }else{
+                fprintf(arquivoTempf, "%d %s\n", produtoId, nomef);
+            }
+        }
+        fclose(arquivoFabricante);
+        fclose(arquivoTempf);
+
+        remove("fabricante.txt");
+        rename("fabricante_temp.txt", "fabricante.txt");
+
+        printf("----------------------------------\n");
+        printf("Nome do fabricante do produto editado com Sucesso\n");
+        printf("----------------------------------\n");
+        }
+
+int escolhat;
+    printf("Voce deseja Editar o nome do Tipo?\n1 - Sim / 2 - Nao\n");
+    scanf("%d",&escolhat);
+
+if(escolhat==1){
+         FILE *arquivoTipo = fopen("tipo.txt", "r");
+        if (arquivoTipo == NULL) {
+        printf("Erro ao abrir o arquivo de produto.\n");
+        return;
+    }
+
+         FILE *arquivoTempt = fopen("tipo_temp.txt", "w");
+        if (arquivoTempt == NULL) {
+        printf("Erro ao criar o arquivo temporario.\n");
+        fclose(arquivoTipo);
+        return;
+    }
+    char novonomet[100];
+    printf("Digite o novo nome Tipo do produto:\n");
+    scanf("%s",novonomet);
+    char linhat[100];
+    rewind(arquivoTipo);
+    while (fgets(linhat, sizeof(linhat), arquivoTipo)) {
+        int produtoId;
+        char nomet[100];
+        sscanf(linhat, "%d %[^\n]", &produtoId, nomet);
+            if (produtoId == prodedit) {
+                fprintf(arquivoTempt, "%d %s\n", prodedit, novonomet);
+            }else{
+                fprintf(arquivoTempt, "%d %s\n", produtoId, nomet);
+            }
+        }
+        fclose(arquivoTipo);
+        fclose(arquivoTempt);
+
+        remove("tipo.txt");
+        rename("tipo_temp.txt", "tipo.txt");
+
+        printf("----------------------------------\n");
+        printf("Nome do tipo do produto editado com Sucesso\n");
+        printf("----------------------------------\n");
+        }
+
+
+}else{
+    printf("Nao existe nenhum produto com esse id\n");
+}
+
+}
+void adicionarItem(produto produtos[], fabricante fabricantes[], tipo tipos[], int *contagem) {
+    FILE *arquivoProduto = fopen("produto.txt", "r");
+    if (arquivoProduto == NULL) {
+        printf("Erro ao abrir o arquivo de produto.\n");
+        return;
+    }
+    
+    printf("Digite as informacoes sobre o novo produto.\n----------------------------------\n");
+    printf("Digite o numero do ID do produto: ");
+    scanf("%d", &produtos[*contagem].id);
+
+    int aux = 0;
+    char linha[100];
+    while (fgets(linha, sizeof(linha), arquivoProduto)) {
+        int produtoIdaux;
+        char nomeaux[100];
+        sscanf(linha, "%d %[^\n]", &produtoIdaux, nomeaux);
+        if (produtoIdaux == produtos[*contagem].id ) {
+            aux = 1;
+            break;
+        }
+    }
+    fclose(arquivoProduto);
+
+    if(aux != 0) {
+        printf("Ja existe um produto com este ID\n");
+        printf("Deseja tentar com outro ID?\n1 - Sim   2 - Nao\n");
+        int sn;
+        scanf("%d", &sn);
+        if(sn == 1) {
+            adicionarItem(produtos, fabricantes, tipos, contagem);
+        }
+    } else {
+        printf("Digite o nome do produto: ");
+        scanf("%s", produtos[*contagem].nome);
+
+        fabricantes[*contagem].id = produtos[*contagem].id;
+        printf("Digite o nome do fabricante: ");
+        scanf("%s", fabricantes[*contagem].nome);
+
+        tipos[*contagem].id = produtos[*contagem].id;
+        printf("Digite o nome do tipo de produto: ");
+        scanf("%s", tipos[*contagem].nome);
+        printf("\n----------------------------------\n");
+        printf("----------------------------------\n\n");
+
+        (*contagem)++;
+
+        FILE *arquivoProduto = fopen("produto.txt", "a");
+        if (arquivoProduto == NULL) {
+            printf("Erro ao abrir o arquivo de produto.\n");
+            return;
+        }
+
+        fprintf(arquivoProduto, "%d %s\n", produtos[*contagem - 1].id, produtos[*contagem - 1].nome);
+
+        fclose(arquivoProduto);
+
+        FILE *arquivoFabricante = fopen("fabricante.txt", "a");
+        if (arquivoFabricante == NULL) {
+            printf("Erro ao abrir o arquivo de fabricante.\n");
+            return;
+        }
+
+        fprintf(arquivoFabricante, "%d %s\n", fabricantes[*contagem - 1].id, fabricantes[*contagem - 1].nome);
+
+        fclose(arquivoFabricante);
+
+        FILE *arquivoTipo = fopen("tipo.txt", "a");
+        if (arquivoTipo == NULL) {
+            printf("Erro ao abrir o arquivo de tipo.\n");
+            return;
+        }
+
+        fprintf(arquivoTipo, "%d %s\n", tipos[*contagem - 1].id, tipos[*contagem - 1].nome);
+
+        fclose(arquivoTipo);
+
+        printf("Novo produto adicionado com sucesso.\n");
+    }
+}
+
+void pesquisarItem() {
+    int produtobuscado;
+    printf("Digite o ID do produto que voce deseja buscar: ");
+    scanf("%d",&produtobuscado);
+
+    FILE *arquivoProduto = fopen("produto.txt", "r");
+    if (arquivoProduto == NULL) {
+        printf("Erro ao abrir o arquivo de produto.\n");
+        return;
+    }
+    
+    printf("----------------------------------\n");
+    printf("Resultado da pesquisa:\n");
+    printf("----------------------------------\n");
+
+    int encontradop = 0;
+    char linha[100];
+    while (fgets(linha, sizeof(linha), arquivoProduto)) {
+        int produtoId;
+        char nome[100];
+        sscanf(linha, "%d %[^\n]", &produtoId, nome);
+        if (produtoId == produtobuscado) {
+            encontradop = 1;
+            printf("ID do produto: %d\n", produtoId);
+            printf("Nome do produto: %s\n", nome);
+        }
+    }
+
+    if (encontradop!=1) {
+        printf("Produto nao encontrado.\n");
+    }
+
+    fclose(arquivoProduto);
+
+FILE *arquivoFabricante = fopen("fabricante.txt", "r");
+    if (arquivoFabricante == NULL) {
+        printf("Erro ao abrir o arquivo de produto.\n");
+        return;
+    }
+
+
+    int encontradof = 0;
+    char linhaf[100];
+    while (fgets(linha, sizeof(linha), arquivoFabricante)) {
+        int fabricanteId;
+        char nomef[100];
+        sscanf(linha, "%d %[^\n]", &fabricanteId, nomef);
+        if (fabricanteId == produtobuscado) {
+            encontradof = 1;
+            printf("Nome do fabricante: %s\n", nomef);
+        }
+    }
+
+    if (encontradof!=1) {
+        printf("Fabricante nao encontrado.\n");
+    }
+
+    fclose(arquivoProduto);
+
+FILE *arquivoTipo = fopen("tipo.txt", "r");
+    if (arquivoTipo == NULL) {
+        printf("Erro ao abrir o arquivo de produto.\n");
+        return;
+    }
+
+    int encontradot = 0;
+    char linhat[100];
+    while (fgets(linha, sizeof(linha), arquivoTipo)) {
+        int tipoId;
+        char nomet[100];
+        sscanf(linha, "%d %[^\n]", &tipoId, nomet);
+        if (tipoId == produtobuscado) {
+            encontradot = 1;
+            printf("Nome do tipo: %s\n", nomet);
+            printf("----------------------------------\n");
+        }
+    }
+
+    if (encontradot!=1) {
+        printf("Tipo nao encontrado.\n");
+    }
+
+    fclose(arquivoProduto);
+    int p;
+    printf("Deseja pesquisar outro item?\n1 - Sim   2 - Nao\n");
+    scanf("%d",&p);
+    if(p==1){
+        pesquisarItem();
+    }
+
+}
+
+void Agradecimento(){
+    printf("----------------------------------\n");
+    printf("Obrigado por usar nossa lista que vale 10\n");
+    printf("ATT: TMT DEVELOPERIS\n");
+    printf("----------------------------------\n");
+}
+
+int main() {
+    int opcao, pesquisae, contagem = 0;
+    produto produtos[999];
+    fabricante fabricantes[999];
+    tipo tipos[999];
+    
+
+    printf("Escolha uma das opcoes:\n----------------------------------\n");
+    printf("1 - Criar lista.\n2 - Excluir item.\n3 - Ver lista.\n4 - Editar lista.\n5 - Adicionar item.\n6 - Buscar produto.\n");
+    printf("----------------------------------\n");
+    scanf("%d", &opcao);
+    printf("----------------------------------\n");
+
+    switch (opcao) {
+        case 1:
+            criarLista(produtos, fabricantes, tipos, &contagem);
+            Agradecimento();
+            break;
+        case 2:
+            excluirItem(contagem);
+            Agradecimento();
+            break;
+        case 3:
+            verLista(produtos, fabricantes, tipos, contagem);
+            Agradecimento();
+            break;
+        case 4:
+        printf("Voce deseja pesquisar algum item antes de editar?\n1 - Sim  2 - Nao\n");
+        scanf("%d",&pesquisae);
+        if(pesquisae==1){
+            pesquisarItem();
+        }
+            editarLista();
+            Agradecimento();
+            break;
+        case 5:
+            adicionarItem(produtos, fabricantes, tipos, &contagem);
+            Agradecimento();
+            break;
+        case 6:
+            pesquisarItem();
+            Agradecimento();
+            break;
+        default:
+            printf("Opcao invalida.\n");
+    }
+
+    return 0;
+}
